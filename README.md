@@ -26,6 +26,12 @@ positive values in all weights (positive if max pooling is used)
 and set biases to zero. In case of Keras API this can be obtained by setting `init_weight=True` 
 in the `KerasReceptiveField(init_weight=True)` constructor.
 
+# Limitations
+
+* Numerical approach cannot be used when RF is larger that input image, however 
+one may try to increase the input image size, sice RF parameters depend on the architecture not 
+image.
+
 # Supported APIs
 
 Currently only Keras and Tensorflow API are supported. However it should be
