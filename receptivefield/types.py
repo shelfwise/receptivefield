@@ -41,4 +41,6 @@ class ReceptiveFieldDescription(NamedTuple):
 
 
 def to_rf_rect(point: GridPoint, size: Size) -> ReceptiveFieldRect:
+    point = GridPoint(*point)
+    size = Size(*size)
     return ReceptiveFieldRect(x=point.x, y=point.y, w=size.w, h=size.h)
