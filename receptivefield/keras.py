@@ -9,16 +9,17 @@ from keras.models import Model
 
 from receptivefield.base import ReceptiveField
 from receptivefield.common import scaled_constant
-from receptivefield.logging import getLogger
+from receptivefield.logging import get_logger
 from receptivefield.types import ImageShape, GridPoint, GridShape
 
-_logger = getLogger()
+_logger = get_logger()
 
 
 def _check_activation(layer: Layer):
     try:
         layer_act = layer.activation.__name__
     except:
+        # TODO: do not use bare except
         layer_act = None
 
     if layer_act != 'linear':
@@ -100,7 +101,6 @@ class KerasReceptiveField(ReceptiveField):
             input_layer: str,
             output_layer: str
     ) -> Tuple[Callable, GridShape, GridShape]:
-
         model = self.model_func(ImageShape(*input_shape))
         if self.init_weights:
             setup_model_weights(model)
@@ -120,9 +120,8 @@ class KerasReceptiveField(ReceptiveField):
             point: GridPoint,
             intensity: float = 1.0
     ) -> np.ndarray:
-
-        output_shape = output_shape._replace(n=1)
-        input_shape = input_shape._replace(n=1)
+        output_shape = output_shape.replace(n=1)
+        input_shape = input_shape.replace(n=1)
 
         output_feature_map = np.zeros(shape=output_shape)
         output_feature_map[:, point.x, point.y, 0] = intensity
