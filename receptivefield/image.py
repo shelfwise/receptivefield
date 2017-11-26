@@ -1,7 +1,9 @@
 import os
 from typing import Union
+
 import numpy
 from PIL import Image
+
 from receptivefield.types import ImageShape
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -13,7 +15,6 @@ def get_default_image(
         shade: bool = True,
         as_image: bool = False
 ) -> Union[numpy.ndarray, Image.Image]:
-
     """
     Loads default image from resources and reshape it to size
     shape.

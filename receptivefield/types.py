@@ -1,4 +1,4 @@
-from typing import NamedTuple
+from typing import NamedTuple, Any
 
 
 class Size(NamedTuple):
@@ -23,6 +23,9 @@ class GridShape(NamedTuple):
     h: int
     c: int
 
+    def replace(self, **kwargs: Any) -> 'GridShape':
+        return self._replace(**kwargs)
+
 
 class ReceptiveFieldRect(NamedTuple):
     x: int
@@ -35,15 +38,6 @@ class ReceptiveFieldDescription(NamedTuple):
     offset: GridPoint
     stride: GridPoint
     size: Size
-
-    def get_offset(self) -> GridPoint:
-        return GridPoint(*self.offset)
-
-    def get_size(self) -> Size:
-        return Size(*self.size)
-
-    def get_stride(self) -> GridPoint:
-        return GridPoint(*self.stride)
 
 
 def to_rf_rect(point: GridPoint, size: Size) -> ReceptiveFieldRect:

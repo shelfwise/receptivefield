@@ -1,13 +1,15 @@
 import itertools
 from typing import Any
+
 import matplotlib
 matplotlib.use('Agg')
 
-from receptivefield.common import _estimate_rf_from_gradients
 import matplotlib.patches as patches
 import matplotlib.pyplot as plt
 import numpy as np
 from mpl_toolkits.axes_grid1 import make_axes_locatable
+
+from receptivefield.common import estimate_rf_from_gradients
 from receptivefield.image import get_default_image
 from receptivefield.types import ImageShape, GridPoint, GridShape, \
     ReceptiveFieldDescription, ReceptiveFieldRect, to_rf_rect
@@ -51,7 +53,7 @@ def plot_gradient_field(
     :param image: optional image of shape [W, H, 3]
     :param plot_params: additional plot params: figsize=(5, 5)
     """
-    receptive_field = _estimate_rf_from_gradients(receptive_field_grad)
+    receptive_field = estimate_rf_from_gradients(receptive_field_grad)
 
     receptive_field_grad = np.array(receptive_field_grad).mean(0).mean(-1)
     receptive_field_grad /= receptive_field_grad.max()
@@ -130,9 +132,9 @@ def plot_receptive_grid(
                 )
             )
 
-    rf_offset = rf_params.get_offset()
-    rf_size = rf_params.get_size()
-    rf_stride = rf_params.get_stride()
+    rf_offset = rf_params.offset
+    rf_size = rf_params.size
+    rf_stride = rf_params.stride
 
     # map from output grid space to input image
     def map_point(i: int, j: int):

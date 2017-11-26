@@ -3,13 +3,13 @@ from typing import Tuple, Callable, Any, Dict
 
 import numpy as np
 
-from receptivefield.common import _estimate_rf_from_gradients
-from receptivefield.logging import getLogger
+from receptivefield.common import estimate_rf_from_gradients
+from receptivefield.logging import get_logger
 from receptivefield.plotting import plot_receptive_grid, plot_gradient_field
 from receptivefield.types import ImageShape, GridPoint, GridShape, \
     ReceptiveFieldDescription, Size
 
-_logger = getLogger()
+_logger = get_logger()
 
 
 class ReceptiveField(metaclass=ABCMeta):
@@ -150,21 +150,21 @@ class ReceptiveField(metaclass=ABCMeta):
 
         # receptive field at map center
         rf_grad00 = self._get_gradient_activation_at_map_center(
-            self.get_gradient_func(), self.get_input_shape(),
-            self.get_output_shape(), center_offset=GridPoint(0, 0))
-        rf_at00 = _estimate_rf_from_gradients(rf_grad00)
+            self.gradient_function, self.input_shape,
+            self.output_shape, center_offset=GridPoint(0, 0))
+        rf_at00 = estimate_rf_from_gradients(rf_grad00)
 
         # receptive field at map center with offset (1, 1)
         rf_grad11 = self._get_gradient_activation_at_map_center(
-            self.get_gradient_func(), self.get_input_shape(),
-            self.get_output_shape(), center_offset=GridPoint(1, 1))
-        rf_at11 = _estimate_rf_from_gradients(rf_grad11)
+            self.gradient_function, self.input_shape,
+            self.output_shape, center_offset=GridPoint(1, 1))
+        rf_at11 = estimate_rf_from_gradients(rf_grad11)
 
         # receptive field at feature map grid start x=0, y=0
         rf_grad_point00 = self._get_gradient_from_grid_point(
-            self.get_gradient_func(), self.get_input_shape(),
-            self.get_output_shape(), point=GridPoint(0, 0))
-        rf_at_point00 = _estimate_rf_from_gradients(rf_grad_point00)
+            self.gradient_function, self.input_shape,
+            self.output_shape, point=GridPoint(0, 0))
+        rf_at_point00 = estimate_rf_from_gradients(rf_grad_point00)
 
         # compute position of the first anchor, center point of rect
         x0 = rf_at_point00.w - rf_at00.w / 2
@@ -190,8 +190,8 @@ class ReceptiveField(metaclass=ABCMeta):
             point: GridPoint,
             image: np.ndarray = None, **plot_params):
         receptive_field_grad = self._get_gradient_from_grid_point(
-            self.get_gradient_func(), self.get_input_shape(),
-            self.get_output_shape(), point=GridPoint(*point)
+            self.gradient_function, self.input_shape,
+            self.output_shape, point=GridPoint(*point)
         )
 
         plot_gradient_field(
@@ -207,29 +207,10 @@ class ReceptiveField(metaclass=ABCMeta):
             **plot_params
     ) -> None:
         plot_receptive_grid(
-            input_shape=self.get_input_shape(),
-            output_shape=self.get_output_shape(),
-            rf_params=self.get_rf_params(),
+            input_shape=self.input_shape,
+            output_shape=self.output_shape,
+            rf_params=self.rf_params,
             custom_image=custom_image,
             plot_naive_rf=plot_naive_rf,
             **plot_params
-        )
-
-    def get_rf_params(self) -> ReceptiveFieldDescription:
-        return self.rf_params
-
-    def get_output_shape(self) -> GridShape:
-        return self.output_shape
-
-    def get_input_shape(self) -> GridShape:
-        return self.input_shape
-
-    def get_gradient_func(self) -> Callable:
-        return self.gradient_function
-
-    def get_params(self) -> Dict[str, Any]:
-        return dict(
-            rf_params=self.get_params(),
-            input_shape=self.get_input_shape(),
-            output_shape=self.get_output_shape()
         )

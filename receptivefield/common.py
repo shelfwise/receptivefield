@@ -2,11 +2,11 @@ from typing import Tuple
 
 import numpy as np
 
-from receptivefield.logging import getLogger
+from receptivefield.logging import get_logger
 from receptivefield.types import GridShape, \
     ReceptiveFieldRect
 
-_logger = getLogger()
+_logger = get_logger()
 
 
 def _compute_fans(shape: GridShape) -> Tuple[int, int]:
@@ -47,7 +47,6 @@ def scaled_constant(
     :return: numpy tensor
     """
     fan_in, fan_out = _compute_fans(shape)
-    scale = scale
     if mode == 'fan_in':
         scale /= max(1., fan_in)
     elif mode == 'fan_out':
@@ -59,7 +58,7 @@ def scaled_constant(
     return limit * np.ones(shape, dtype=dtype)
 
 
-def _estimate_rf_from_gradients(
+def estimate_rf_from_gradients(
         receptive_field_grad: np.ndarray
 ) -> ReceptiveFieldRect:
     """
@@ -76,8 +75,8 @@ def _estimate_rf_from_gradients(
     x_cs: np.ndarray = binary_map.sum(-1) >= 1
     y_cs: np.ndarray = binary_map.sum(0) >= 1
 
-    x = np.array(range(len(x_cs)))
-    y = np.array(range(len(y_cs)))
+    x = np.arange(len(x_cs))
+    y = np.arange(len(y_cs))
 
     width = x_cs.sum()
     height = y_cs.sum()
