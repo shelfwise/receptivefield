@@ -1,12 +1,14 @@
 from setuptools import setup
 
-setup(name='receptivefield',
-      version='0.1',
-      description='receptivefield',
-      url='...',
-      author='fornax',
-      author_email='',
-      license='',
-      packages=['receptivefield'],
-      include_package_data=True,
-      zip_safe=False, install_requires=['numpy'])
+setup(
+  name = 'receptivefield',
+  packages = ['receptivefield'],
+  version = '0.1',
+  description = 'Gradient based Receptive field estimation library',
+  author = 'fornax.ai',
+  author_email = 'krzysztof.kolasinski@fornax.ai',
+  url = 'https://github.com/fornaxai/receptivefield',
+  download_url = 'https://github.com/fornaxai/receptivefield/archive/0.1.tar.gz', 
+  keywords = ['tensorflow', 'keras', 'receptivefield'],
+  classifiers = [],
+)
