@@ -11,7 +11,8 @@ computing receptive fields cannot be used.
 
 # Installation
 
-* `pip install receptivefield` inside the project.
+* Requires: python (in version >3.6), keras, tensorflow, numpy, matplotlib, pillow (check requirements.txt) 
+* `pip install receptivefield`
 
 # Some remarks
 
