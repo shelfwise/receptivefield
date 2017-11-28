@@ -9,6 +9,8 @@ useful when dealing with more complicated neural networks like
 ResNet, Inception (see notebooks) where analytical approach of 
 computing receptive fields cannot be used.
 
+[![Build Status](https://travis-ci.org/fornaxai/receptivefield.svg?branch=master)](https://travis-ci.org/fornaxai/receptivefield)
+
 # Installation
 
 * Requires: python (in version >3.6), keras, tensorflow, numpy, matplotlib, pillow (check requirements.txt) 
