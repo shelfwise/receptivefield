@@ -16,10 +16,9 @@ _logger = get_logger()
 
 
 def _check_activation(layer: Layer):
-    try:
+    if issubclass(type(layer), Layer):
         layer_act = layer.activation.__name__
-    except:
-        # TODO: do not use bare except
+    else:
         layer_act = None
 
     if layer_act != 'linear':

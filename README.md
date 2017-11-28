@@ -81,6 +81,47 @@ abstract class **ReceptiveField** in base.py file.
     * `size` - defines the effective area in the input image which one point 
     in the feature_map tensor is seeing.
 
+# Keras minimal - copy/paste example
+
+* Python code:
+
+    ```python
+        from keras.layers import Conv2D, Input, AvgPool2D
+        from keras.models import Model
+        from receptivefield.image import get_default_image
+        from receptivefield.keras import KerasReceptiveField
+        
+        # define model function
+        def model_build_func(input_shape):
+            act = 'linear' # see Remarks
+            inp = Input(shape=input_shape, name='input_image')
+            x = Conv2D(32, (7, 7), activation=act)(inp)
+            x = Conv2D(32, (5, 5), activation=act)(x)
+            x = AvgPool2D()(x)
+            x = Conv2D(64, (5, 5), activation=act, name='feature_grid')(x)
+            x = AvgPool2D()(x)
+            model = Model(inp, x)
+            return model
+        
+        shape = [64, 64, 3]
+        # compute receptive field
+        rf = KerasReceptiveField(model_build_func, init_weights=True)
+        rf_params = rf.compute(shape, 'input_image', 'feature_grid')
+        # debug receptive field
+        rf.plot_rf_grid(get_default_image(shape, name='doge'))
+    ```
+* Output
+    ```text
+    Using TensorFlow backend.
+    [2017-11-28 21:47:14,327][ INFO][keras.py]::Feature map shape: (None, 23, 23, 64)
+    [2017-11-28 21:47:14,328][ INFO][keras.py]::Input shape      : (None, 64, 64, 3)
+    [2017-11-28 21:47:14,471][DEBUG][base.py]::Computing RF at center (11, 11) with offset GridPoint(x=0, y=0)
+    [2017-11-28 21:47:14,676][DEBUG][base.py]::Computing RF at center (11, 11) with offset GridPoint(x=1, y=1)
+    [2017-11-28 21:47:14,779][DEBUG][base.py]::Estimated RF params: ReceptiveFieldDescription(offset=(10.0, 10.0), stride=(2.0, 2.0), size=Size(w=20, h=20))
+    ```
+    <img src="img/demo_minimal.jpg" width="400">
+
+
 # Keras more detailed example
 
 Here we show, how to estimate effective receptive field of any Keras model.
@@ -117,7 +158,7 @@ should accept one parameter `input_shape`.
     model.summary()
     ```
     
-    ```txt
+    ```text
     _________________________________________________________________
     Layer (type)                 Output Shape              Param #   
     =================================================================
@@ -177,7 +218,7 @@ wish detect (or localize) by this network.
 
 * The resulting receptive field is:
 
-    ```txt
+    ```text
     ReceptiveFieldDescription(
             offset=(17.0, 17.0), 
             stride=(4.0, 4.0), 

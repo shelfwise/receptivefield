@@ -166,6 +166,8 @@ class ReceptiveField(metaclass=ABCMeta):
             size=size
         )
         self.rf_params = rf_params
+
+        _logger.debug(f"Estimated RF params: {rf_params}")
         return rf_params
 
     def plot_gradient_at(
