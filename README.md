@@ -13,7 +13,7 @@ computing receptive fields cannot be used.
 
 # Installation
 
-* Requires: python (in version >3.6), keras, tensorflow, numpy, matplotlib, pillow (check requirements.txt) 
+* Requires: python (in version >= 3.6), keras, tensorflow, numpy, matplotlib, pillow (check requirements.txt) 
 * `pip install receptivefield`
 
 # Some remarks
