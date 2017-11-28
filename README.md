@@ -110,7 +110,7 @@ abstract class **ReceptiveField** in base.py file.
         # debug receptive field
         rf.plot_rf_grid(get_default_image(shape, name='doge'))
     ```
-* Output
+* Logger output + example RF grid
     ```text
     Using TensorFlow backend.
     [2017-11-28 21:47:14,327][ INFO][keras.py]::Feature map shape: (None, 23, 23, 64)
@@ -119,6 +119,7 @@ abstract class **ReceptiveField** in base.py file.
     [2017-11-28 21:47:14,676][DEBUG][base.py]::Computing RF at center (11, 11) with offset GridPoint(x=1, y=1)
     [2017-11-28 21:47:14,779][DEBUG][base.py]::Estimated RF params: ReceptiveFieldDescription(offset=(10.0, 10.0), stride=(2.0, 2.0), size=Size(w=20, h=20))
     ```
+    
     <img src="img/demo_minimal.jpg" width="400">
 
 
