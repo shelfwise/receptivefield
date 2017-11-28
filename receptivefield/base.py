@@ -98,7 +98,7 @@ class ReceptiveField(metaclass=ABCMeta):
             intensity: float = 1
     ):
         _logger.debug(
-            f"Computing receptive field at center "
+            f"Computing RF at center "
             f"({output_shape.w//2}, {output_shape.h//2}) "
             f"with offset {center_offset}")
 
@@ -183,6 +183,8 @@ class ReceptiveField(metaclass=ABCMeta):
             size=size
         )
         self.rf_params = rf_params
+
+        _logger.debug(f"Estimated RF params: {rf_params}")
         return rf_params
 
     def plot_gradient_at(
