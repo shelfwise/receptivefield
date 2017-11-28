@@ -113,19 +113,16 @@ class KerasReceptiveField(ReceptiveField):
 
     def _get_gradient_from_grid_point(
             self,
-            gradient_function: Callable,
-            input_shape: GridShape,
-            output_shape: GridShape,
             point: GridPoint,
             intensity: float = 1.0
     ) -> np.ndarray:
-        output_shape = output_shape.replace(n=1)
-        input_shape = input_shape.replace(n=1)
+        output_shape = self.output_shape.replace(n=1)
+        input_shape = self.input_shape.replace(n=1)
 
         output_feature_map = np.zeros(shape=output_shape)
         output_feature_map[:, point.x, point.y, 0] = intensity
 
-        receptive_field_grad = gradient_function([
+        receptive_field_grad = self.gradient_function([
             output_feature_map, np.zeros(shape=input_shape), 0])[0]
 
         return receptive_field_grad

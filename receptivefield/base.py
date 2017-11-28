@@ -68,9 +68,6 @@ class ReceptiveField(metaclass=ABCMeta):
     @abstractmethod
     def _get_gradient_from_grid_point(
             self,
-            gradient_function: Callable,
-            input_shape: GridShape,
-            output_shape: GridShape,
             point: GridPoint,
             intensity: float = 1.0
     ) -> np.ndarray:
@@ -79,10 +76,6 @@ class ReceptiveField(metaclass=ABCMeta):
         point-like perturbation at  output grid location given by
         @point coordinates.
 
-        :param gradient_function: callable function
-        :param input_shape: shape of the input tensor [N, H, W, C]
-        (usually the image layer)
-        :param output_shape: shape of the output tensor [N, H, W, C]
         :param point: source coordinate of the backpropagated gradient
         :param intensity: scale of the gradient, default = 1
         :return:
@@ -91,30 +84,26 @@ class ReceptiveField(metaclass=ABCMeta):
 
     def _get_gradient_activation_at_map_center(
             self,
-            gradient_function: Callable,
-            input_shape: GridShape,
-            output_shape: GridShape,
             center_offset: GridPoint,
             intensity: float = 1
     ):
         _logger.debug(
-            f"Computing RF at center "
-            f"({output_shape.w//2}, {output_shape.h//2}) "
+            f"Computing receptive field at center "
+            f"({self.output_shape.w//2}, {self.output_shape.h//2}) "
             f"with offset {center_offset}")
 
         # compute grid center
-        cx = output_shape.w // 2 - 1 \
-            if output_shape.w % 2 == 0 else output_shape.w // 2
-        cy = output_shape.h // 2 - 1 \
-            if output_shape.h % 2 == 0 else output_shape.h // 2
+        w = self.output_shape.w
+        h = self.output_shape.h
+        cx = w // 2 - 1 \
+            if w % 2 == 0 else w // 2
+        cy = h // 2 - 1 \
+            if h % 2 == 0 else h // 2
 
         cx += center_offset.x
         cy += center_offset.y
 
         return self._get_gradient_from_grid_point(
-            gradient_function=gradient_function,
-            input_shape=input_shape,
-            output_shape=output_shape,
             point=GridPoint(x=cx, y=cy),
             intensity=intensity
         )
@@ -149,21 +138,15 @@ class ReceptiveField(metaclass=ABCMeta):
         )
 
         # receptive field at map center
-        rf_grad00 = self._get_gradient_activation_at_map_center(
-            self.gradient_function, self.input_shape,
-            self.output_shape, center_offset=GridPoint(0, 0))
+        rf_grad00 = self._get_gradient_activation_at_map_center(center_offset=GridPoint(0, 0))
         rf_at00 = estimate_rf_from_gradients(rf_grad00)
 
         # receptive field at map center with offset (1, 1)
-        rf_grad11 = self._get_gradient_activation_at_map_center(
-            self.gradient_function, self.input_shape,
-            self.output_shape, center_offset=GridPoint(1, 1))
+        rf_grad11 = self._get_gradient_activation_at_map_center(center_offset=GridPoint(1, 1))
         rf_at11 = estimate_rf_from_gradients(rf_grad11)
 
         # receptive field at feature map grid start x=0, y=0
-        rf_grad_point00 = self._get_gradient_from_grid_point(
-            self.gradient_function, self.input_shape,
-            self.output_shape, point=GridPoint(0, 0))
+        rf_grad_point00 = self._get_gradient_from_grid_point(point=GridPoint(0, 0))
         rf_at_point00 = estimate_rf_from_gradients(rf_grad_point00)
 
         # compute position of the first anchor, center point of rect
