@@ -86,29 +86,29 @@ abstract class **ReceptiveField** in base.py file.
 * Python code:
 
     ```python
-        from keras.layers import Conv2D, Input, AvgPool2D
-        from keras.models import Model
-        from receptivefield.image import get_default_image
-        from receptivefield.keras import KerasReceptiveField
-        
-        # define model function
-        def model_build_func(input_shape):
-            act = 'linear' # see Remarks
-            inp = Input(shape=input_shape, name='input_image')
-            x = Conv2D(32, (7, 7), activation=act)(inp)
-            x = Conv2D(32, (5, 5), activation=act)(x)
-            x = AvgPool2D()(x)
-            x = Conv2D(64, (5, 5), activation=act, name='feature_grid')(x)
-            x = AvgPool2D()(x)
-            model = Model(inp, x)
-            return model
-        
-        shape = [64, 64, 3]
-        # compute receptive field
-        rf = KerasReceptiveField(model_build_func, init_weights=True)
-        rf_params = rf.compute(shape, 'input_image', 'feature_grid')
-        # debug receptive field
-        rf.plot_rf_grid(get_default_image(shape, name='doge'))
+    from keras.layers import Conv2D, Input, AvgPool2D
+    from keras.models import Model
+    from receptivefield.image import get_default_image
+    from receptivefield.keras import KerasReceptiveField
+
+    # define model function
+    def model_build_func(input_shape):
+        act = 'linear' # see Remarks
+        inp = Input(shape=input_shape, name='input_image')
+        x = Conv2D(32, (7, 7), activation=act)(inp)
+        x = Conv2D(32, (5, 5), activation=act)(x)
+        x = AvgPool2D()(x)
+        x = Conv2D(64, (5, 5), activation=act, name='feature_grid')(x)
+        x = AvgPool2D()(x)
+        model = Model(inp, x)
+        return model
+
+    shape = [64, 64, 3]
+    # compute receptive field
+    rf = KerasReceptiveField(model_build_func, init_weights=True)
+    rf_params = rf.compute(shape, 'input_image', 'feature_grid')
+    # debug receptive field
+    rf.plot_rf_grid(get_default_image(shape, name='doge'))
     ```
 * Logger output + example RF grid
     ```text
