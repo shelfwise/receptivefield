@@ -1,5 +1,5 @@
 from abc import ABCMeta, abstractmethod
-from typing import Tuple, Callable, Any, Dict
+from typing import Tuple, Callable, Any
 
 import numpy as np
 
@@ -174,10 +174,9 @@ class ReceptiveField(metaclass=ABCMeta):
             self,
             point: GridPoint,
             image: np.ndarray = None, **plot_params):
+
         receptive_field_grad = self._get_gradient_from_grid_point(
-            self.gradient_function, self.input_shape,
-            self.output_shape, point=GridPoint(*point)
-        )
+            point=GridPoint(*point))
 
         plot_gradient_field(
             receptive_field_grad=receptive_field_grad,

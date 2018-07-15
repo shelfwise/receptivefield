@@ -3,7 +3,7 @@ from typing import Union, List
 
 import numpy
 from PIL import Image
-import os
+
 from receptivefield.types import ImageShape
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
