@@ -87,7 +87,7 @@ class ReceptiveField(metaclass=ABCMeta):
             center_offset: GridPoint,
             intensity: float = 1
     ):
-        _logger.debug(
+        _logger.info(
             f"Computing receptive field at center "
             f"({self.output_shape.w//2}, {self.output_shape.h//2}) "
             f"with offset {center_offset}")
@@ -123,7 +123,7 @@ class ReceptiveField(metaclass=ABCMeta):
         Compute ReceptiveFieldDescription of given model for image of
         shape input_shape [W, H, C]. If receptive field of the network
         is bigger thant input_shape this method will raise exception.
-        In order to solve with problem try to increase input_shape.
+        In order to solve this problem try to increase input_shape.
 
         :param input_shape: shape of the input image e.g. (224, 224, 3)
         :param input_layer: name of the input layer
@@ -167,7 +167,7 @@ class ReceptiveField(metaclass=ABCMeta):
         )
         self.rf_params = rf_params
 
-        _logger.debug(f"Estimated RF params: {rf_params}")
+        _logger.info(f"Estimated RF params: {rf_params}")
         return rf_params
 
     def plot_gradient_at(
