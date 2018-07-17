@@ -100,7 +100,7 @@ class KerasReceptiveField(ReceptiveField):
             input_layer: str,
             output_layer: str
     ) -> Tuple[Callable, GridShape, GridShape]:
-        model = self.model_func(ImageShape(*input_shape))
+        model = self._model_func(ImageShape(*input_shape))
         if self.init_weights:
             setup_model_weights(model)
 
@@ -111,18 +111,18 @@ class KerasReceptiveField(ReceptiveField):
                GridShape(*input_shape), \
                GridShape(*output_shape)
 
-    def _get_gradient_from_grid_point(
+    def _get_gradient_from_grid_points(
             self,
             point: GridPoint,
             intensity: float = 1.0
     ) -> np.ndarray:
         output_shape = self.output_shape.replace(n=1)
-        input_shape = self.input_shape.replace(n=1)
+        input_shape = self._input_shape.replace(n=1)
 
         output_feature_map = np.zeros(shape=output_shape)
         output_feature_map[:, point.x, point.y, 0] = intensity
 
-        receptive_field_grad = self.gradient_function([
+        receptive_field_grad = self._gradient_function([
             output_feature_map, np.zeros(shape=input_shape), 0])[0]
 
         return receptive_field_grad

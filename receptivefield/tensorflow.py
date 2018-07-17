@@ -41,7 +41,7 @@ class TFReceptiveField(KerasReceptiveField):
     ) -> Tuple[Callable, GridShape, GridShape]:
 
         # this function will create default graph
-        _ = self.model_func(ImageShape(*input_shape))
+        _ = self._model_func(ImageShape(*input_shape))
 
         default_graph = tf.get_default_graph()
 

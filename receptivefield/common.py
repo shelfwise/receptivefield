@@ -1,4 +1,4 @@
-from typing import Tuple
+from typing import Tuple, List
 
 import numpy as np
 
@@ -59,28 +59,36 @@ def scaled_constant(
 
 
 def estimate_rf_from_gradients(
-        receptive_field_grad: np.ndarray
-) -> ReceptiveFieldRect:
+        receptive_field_grads: List[np.ndarray]
+) -> List[ReceptiveFieldRect]:
     """
-    Given input gradient tensor of shape [N, W, H, C] it returns the
+    Given input gradient tensors of shape [N, W, H, C] it returns the
     estimated size of gradient `blob` in W-H directions i.e. this
-    function computes the size of gradient in W-H axis.
-    :param receptive_field_grad: numpy tensor with gradient values
-    :return: @ReceptiveFieldRect
+    function computes the size of gradient in W-H axis for each feature map.
+
+    :param receptive_field_grads: a list of numpy tensor with gradient values
+        obtained for different feature maps
+    :return: a list of corresponding ReceptiveFieldRect
     """
-    receptive_field_grad = np.array(receptive_field_grad).mean(0).mean(-1)
 
-    binary_map: np.ndarray = (receptive_field_grad[:, :] > 0)
+    rfs = []
+    for receptive_field_grad in receptive_field_grads:
+        receptive_field_grad = np.array(receptive_field_grad).mean(0).mean(-1)
 
-    x_cs: np.ndarray = binary_map.sum(-1) >= 1
-    y_cs: np.ndarray = binary_map.sum(0) >= 1
+        binary_map: np.ndarray = (receptive_field_grad[:, :] > 0)
 
-    x = np.arange(len(x_cs))
-    y = np.arange(len(y_cs))
+        x_cs: np.ndarray = binary_map.sum(-1) >= 1
+        y_cs: np.ndarray = binary_map.sum(0) >= 1
 
-    width = x_cs.sum()
-    height = y_cs.sum()
+        x = np.arange(len(x_cs))
+        y = np.arange(len(y_cs))
 
-    x = np.sum(x * x_cs) / width
-    y = np.sum(y * y_cs) / height
-    return ReceptiveFieldRect(x, y, width, height)
+        width = x_cs.sum()
+        height = y_cs.sum()
+
+        x = np.sum(x * x_cs) / width
+        y = np.sum(y * y_cs) / height
+
+        rf = ReceptiveFieldRect(x, y, width, height)
+        rfs.append(rf)
+    return rfs
