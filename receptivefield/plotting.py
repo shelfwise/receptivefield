@@ -1,5 +1,5 @@
 import itertools
-from typing import Any
+from typing import Any, Optional
 
 import matplotlib.patches as patches
 import matplotlib.pyplot as plt
@@ -21,7 +21,8 @@ def _plot_rect(
         size: float = 90
 ) -> None:
     """
-    Plot rectangle and center point
+    Plot rectangle and center point.
+
     :param ax: matplotlib axis
     :param rect: definition of rectangle
     :param color:
@@ -42,12 +43,17 @@ def _plot_rect(
 def plot_gradient_field(
         receptive_field_grad: np.ndarray,
         image: np.ndarray = None,
+        axis: Optional[Any] = None,
         **plot_params
 ) -> None:
     """
     Plot gradient map from gradient tensor.
+
     :param receptive_field_grad: numpy tensor of shape [N, W, H, C]
     :param image: optional image of shape [W, H, 3]
+    :param axis: a matplotlib axis object as returned by the e.g. plt.subplot
+        function. If not None then axis is used for visualizations otherwise
+        default figure is created.
     :param plot_params: additional plot params: figsize=(5, 5)
     """
     receptive_field = estimate_rf_from_gradients(receptive_field_grad)
@@ -61,19 +67,21 @@ def plot_gradient_field(
         receptive_field_grad = 255/2 * (receptive_field_grad + 1) + image * 0.5
         receptive_field_grad = receptive_field_grad.astype('uint8')
 
-    figsize = plot_params.get("figsize", (5, 5))
-    plt.figure(figsize=figsize)
-    ax = plt.subplot(111)
+    if axis is None:
+        figsize = plot_params.get("figsize", (5, 5))
+        plt.figure(figsize=figsize)
+        axis = plt.subplot(111)
+
     plt.title("Normalized gradient map")
     im = plt.imshow(receptive_field_grad, cmap='coolwarm')
     plt.xlabel("x")
     plt.ylabel("y")
 
-    divider = make_axes_locatable(ax)
+    divider = make_axes_locatable(axis)
     cax = divider.append_axes("right", size="5%", pad=0.05)
     plt.colorbar(im, cax=cax)
 
-    ax.add_patch(
+    axis.add_patch(
         patches.Rectangle(
             (receptive_field.y - receptive_field.h/2,
              receptive_field.x - receptive_field.w/2),  # (x,y)
@@ -84,7 +92,7 @@ def plot_gradient_field(
             edgecolor=(0.2, 0.2, 0.2)
         )
     )
-    ax.set_aspect('equal')
+    axis.set_aspect('equal')
     plt.tight_layout()
 
 
@@ -92,11 +100,29 @@ def plot_receptive_grid(
         input_shape: GridShape,
         output_shape: GridShape,
         rf_params: ReceptiveFieldDescription,
-        custom_image: np.ndarray = None,
+        custom_image: Optional[np.ndarray] = None,
         plot_naive_rf: bool = False,
+        axis: Optional[Any] = None,
         **plot_params
 ) -> None:
+    """
+    Visualize receptive field grid.
 
+    :param input_shape: an input image shape as an instance of GridShape
+    :param output_shape: an output feature map shape
+    :param rf_params: an instance of ReceptiveFieldDescription computed for
+        this feature map.
+    :param custom_image: optional image [height, width, 3] to be plotted as
+        a background.
+    :param plot_naive_rf: plot naive version of the receptive field. Naive
+        version of RF does not take strides, and offsets into considerations,
+        it is a simple linear mapping from N points in feature map to pixels
+        in the image.
+    :param axis: a matplotlib axis object as returned by the e.g. plt.subplot
+        function. If not None then axis is used for visualizations otherwise
+        default figure is created.
+    :param plot_params: additional plot params: figsize=(5, 5)
+    """
     if custom_image is None:
         img = get_default_image(
             shape=ImageShape(input_shape.h, input_shape.w))
@@ -106,10 +132,11 @@ def plot_receptive_grid(
     figsize = plot_params.get("figsize", (10, 10))
 
     # plot image
-    plt.figure(figsize=figsize)
-    ax = plt.subplot(111)
-    plt.imshow(img)
+    if axis is None:
+        plt.figure(figsize=figsize)
+        axis = plt.subplot(111)
 
+    axis.imshow(img)
     # plot naive receptive field grid
     if plot_naive_rf:
         dw = input_shape.w / output_shape.w
@@ -119,7 +146,7 @@ def plot_receptive_grid(
             x0, x1 = i * dw, (i + 1) * dw
             y0, y1 = j * dh, (j + 1) * dh
 
-            ax.add_patch(
+            axis.add_patch(
                 patches.Rectangle(
                     (y0, x0), dh, dw,
                     alpha=0.9,
@@ -144,29 +171,29 @@ def plot_receptive_grid(
               ]
 
     points = np.array(points)
-    plt.scatter(
+    axis.scatter(
         points[:, 1], points[:, 0],
         marker="o", c=(0.2, 0.9, 0.1, 0.9), s=10
     )
 
     # plot receptive field from corner point
     _plot_rect(
-        ax,
+        axis,
         rect=to_rf_rect(rf_offset, rf_size),
         color=(0.9, 0.3, 0.2), linewidth=5, size=90
     )
     center_point = map_point(output_shape.w//2, output_shape.h//2)
     _plot_rect(
-        ax,
+        axis,
         rect=to_rf_rect(
             GridPoint(center_point[0], center_point[1]), rf_size),
         color=(0.1, 0.3, 0.9), linewidth=5, size=90
     )
     last_point = map_point(output_shape.w-1, output_shape.h-1)
     _plot_rect(
-        ax,
+        axis,
         rect=to_rf_rect(
             GridPoint(last_point[0], last_point[1]), rf_size),
         color=(0.1, 0.9, 0.3), linewidth=5, size=90
     )
-    ax.set_aspect('equal')
+    axis.set_aspect('equal')
