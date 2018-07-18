@@ -6,7 +6,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
-from receptivefield.common import estimate_rf_from_gradients
+from receptivefield.common import estimate_rf_from_gradients, \
+    estimate_rf_from_gradient
 from receptivefield.image import get_default_image
 from receptivefield.types import ImageShape, GridPoint, GridShape, \
     ReceptiveFieldDescription, ReceptiveFieldRect, to_rf_rect
@@ -56,7 +57,7 @@ def plot_gradient_field(
         default figure is created.
     :param plot_params: additional plot params: figsize=(5, 5)
     """
-    receptive_field = estimate_rf_from_gradients(receptive_field_grad)
+    receptive_field = estimate_rf_from_gradient(receptive_field_grad)
 
     receptive_field_grad = np.array(receptive_field_grad).mean(0).mean(-1)
     receptive_field_grad /= receptive_field_grad.max()

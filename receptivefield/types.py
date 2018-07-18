@@ -40,6 +40,15 @@ class ReceptiveFieldDescription(NamedTuple):
     size: Size
 
 
+class FeatureMapDescription(NamedTuple):
+    """
+    size: a feature map size
+    rf: a ReceptiveFieldDescription
+    """
+    size: Size
+    rf: ReceptiveFieldDescription
+
+
 def to_rf_rect(point: GridPoint, size: Size) -> ReceptiveFieldRect:
     point = GridPoint(*point)
     size = Size(*size)
