@@ -37,8 +37,8 @@ class TFReceptiveField(KerasReceptiveField):
             self,
             input_shape: ImageShape,
             input_layer: str,
-            output_layer: str
-    ) -> Tuple[Callable, GridShape, GridShape]:
+            output_layers: List[str]
+    ) -> Tuple[Callable, GridShape, List[GridShape]]:
 
         # this function will create default graph
         _ = self._model_func(ImageShape(*input_shape))
@@ -49,31 +49,42 @@ class TFReceptiveField(KerasReceptiveField):
         input_tensor = default_graph \
             .get_operation_by_name(input_layer).outputs[0]
 
-        output_tensor = default_graph \
-            .get_operation_by_name(output_layer).outputs[0]
+        grads = []
+        receptive_field_masks = []
+        output_shapes = []
 
-        # get their shapes
-        output_shape = _get_tensor_shape(output_tensor)
-        input_shape = _get_tensor_shape(input_tensor)
+        for output_layer in output_layers:
+            output_tensor = default_graph \
+                .get_operation_by_name(output_layer).outputs[0]
 
-        # define loss function
-        output_shape = (1, output_shape[1], output_shape[2], 1)
+            # shapes
+            output_shape = _get_tensor_shape(output_tensor)
+            input_shape = _get_tensor_shape(input_tensor)
+            output_shape = (1, output_shape[1], output_shape[2], 1)
+            output_shapes.append(output_shape)
 
-        receptive_field_mask = tf.placeholder(
-            tf.float32, shape=output_shape, name='grid'
-        )
+            # define loss function
+            receptive_field_mask = tf.placeholder(
+                tf.float32, shape=output_shape, name='grid'
+            )
 
-        x = tf.reduce_mean(output_tensor, -1, keep_dims=True)
-        fake_loss = x * receptive_field_mask
-        fake_loss = tf.reduce_mean(fake_loss)
-        grads = tf.gradients(fake_loss, input_tensor)
+            x = tf.reduce_mean(output_tensor, -1, keep_dims=True)
+            fake_loss = x * receptive_field_mask
+            fake_loss = tf.reduce_mean(fake_loss)
+            grad = tf.gradients(fake_loss, input_tensor)
+
+            grads.append(grad[0])
+            receptive_field_masks.append(receptive_field_mask)
+
+        _logger.info(f"Feature maps shape: {output_shapes}")
+        _logger.info(f"Input shape       : {input_shape}")
+
         # here we use Keras API to define gradient function which is simpler
         # than native tf
         gradient_function = keras.backend.function(
-            inputs=[receptive_field_mask, input_tensor, keras.backend.learning_phase()],
+            inputs=[*receptive_field_masks, input_tensor, keras.backend.learning_phase()],
             outputs=grads
         )
 
-        return gradient_function, \
-            GridShape(*input_shape), \
-            GridShape(*output_shape)
+        return gradient_function, GridShape(*input_shape), \
+            [GridShape(*output_shape) for output_shape in output_shapes]

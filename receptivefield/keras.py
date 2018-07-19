@@ -66,7 +66,7 @@ def _define_receptive_field_func(
         model: Model,
         input_layer: str,
         feature_map_layers: List[str]
-) -> Tuple[Callable, GridShape, List[GridShape]]:
+):
 
     output_shapes = []
     input_shape = model.get_layer(input_layer).output_shape
