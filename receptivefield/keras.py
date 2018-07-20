@@ -106,6 +106,8 @@ class KerasReceptiveField(ReceptiveField):
             init_weights: bool = False
     ):
         """
+        Build Keras receptive field estimator.
+
         :param model_func: model creation function
         :param init_weights: if True all conv2d weights are overwritten
         by constant value.

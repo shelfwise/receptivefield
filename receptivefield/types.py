@@ -23,7 +23,7 @@ class GridShape(NamedTuple):
     h: int
     c: int
 
-    def replace(self, **kwargs: Any) -> 'GridShape':
+    def replace(self, **kwargs: Any) -> "GridShape":
         return self._replace(**kwargs)
 
 
@@ -45,6 +45,7 @@ class FeatureMapDescription(NamedTuple):
     size: a feature map size
     rf: a ReceptiveFieldDescription
     """
+
     size: Size
     rf: ReceptiveFieldDescription
 

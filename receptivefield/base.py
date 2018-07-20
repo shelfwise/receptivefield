@@ -15,10 +15,10 @@ _logger = get_logger()
 class ReceptiveField(metaclass=ABCMeta):
     def __init__(
             self,
-            model_func: Callable[[ImageShape], Any]
+            model_func: Callable[[Any], Any]
     ) -> None:
 
-        self._model_func: Callable[[ImageShape], Any] = model_func
+        self._model_func: Callable[[Any], Any] = model_func
         self._gradient_function: Callable = None
         self._input_shape: GridShape = None
         self._output_shapes: List[GridShape] = None
