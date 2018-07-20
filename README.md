@@ -1,4 +1,7 @@
+<img src="img/demo_minimal.jpg" width="400">
+
 # receptivefield
+
 
 Gradient based receptive field estimation for Convolutional 
 Neural Networks. **receptivefield** uses backpropagation of 
