@@ -1,6 +1,6 @@
 from setuptools import setup
 
-VERSION = '0.2.2'
+VERSION = '0.3.0'
 
 setup(
     name='receptivefield',
@@ -13,7 +13,9 @@ setup(
     download_url=f'https://github.com/fornaxai/receptivefield/archive/{VERSION}.tar.gz',
     keywords=['tensorflow', 'keras'],
     install_requires=[
-        'matplotlib', 'pillow', 'numpy', 'keras'
+        'pillow>=4.1.1',
+        'matplotlib>=2.0.2',
+        'numpy>=1.14.3',
     ],
     classifiers=[],
     include_package_data=True

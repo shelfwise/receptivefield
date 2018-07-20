@@ -23,7 +23,7 @@ class GridShape(NamedTuple):
     h: int
     c: int
 
-    def replace(self, **kwargs: Any) -> 'GridShape':
+    def replace(self, **kwargs: Any) -> "GridShape":
         return self._replace(**kwargs)
 
 
@@ -38,6 +38,16 @@ class ReceptiveFieldDescription(NamedTuple):
     offset: GridPoint
     stride: GridPoint
     size: Size
+
+
+class FeatureMapDescription(NamedTuple):
+    """
+    size: a feature map size
+    rf: a ReceptiveFieldDescription
+    """
+
+    size: Size
+    rf: ReceptiveFieldDescription
 
 
 def to_rf_rect(point: GridPoint, size: Size) -> ReceptiveFieldRect:
