@@ -1,4 +1,4 @@
-<img src="img/demo_minimal.jpg" width="400">
+<img src="img/demo.jpg" width="400">
 
 # receptivefield
 
