@@ -200,7 +200,7 @@ contain
     [ INFO][base.py]::Estimated receptive field for feature map [1]: ReceptiveFieldDescription(offset=(8.0, 8.0), stride=(16.0, 16.0), size=Size(w=196, h=196))
     ```
     
-     <img src="img/demo_minimal_tf.jpg" width="400">
+     <img src="img/demo_minimal_tf.jpg" width="700">
     
 # Keras more detailed example
 
