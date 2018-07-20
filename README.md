@@ -1,8 +1,11 @@
+<img src="img/demo_readme.jpg" width="800">
+
 # receptivefield
+
 
 Gradient based receptive field estimation for Convolutional 
 Neural Networks. **receptivefield** uses backpropagation of 
-the gradients from output feature map to input image in order to
+the gradients from output of selected feature maps to the input image in order to
 estimate the size (width, height), stride and offset of resulting
 receptive field. Numerical estimation of receptive field can be 
 useful when dealing with more complicated neural networks like
@@ -13,12 +16,19 @@ computing receptive fields cannot be used.
 
 # Installation
 
-* Requires: python (in version >= 3.6), keras, tensorflow, numpy, matplotlib, pillow (check requirements.txt) 
+* Requires: python (in version >= 3.6), numpy, matplotlib, pillow (check requirements.txt)
+* Depending on the selected API this library requires also:
+    * for Keras API: 
+        * keras>=2.1.6 
+        * tensorflow-gpu>=1.8.0
+    * for Tensorflow API:
+        * tensorflow-gpu>=1.8.0
+
 * `pip install receptivefield`
 
 # Some remarks
 
-* In order to get better results or even avoid NaNs in the 
+* In order to get better results or avoid possible NaNs in the 
 estimated receptive field parameters, it is suggested to 
 use `Linear` (instead `Relu`) activation and `AvgPool2D` instead of `MaxPool2D`.
 This improves gradient flow in the network and hence better signal
@@ -26,14 +36,14 @@ in the input image. Note, that this is required only for RF estimation.
 
 * Additionally, one may even initialize network with constant 
 positive values in all weights (positive if max pooling is used)
-and set biases to zero. In case of Keras API this can be obtained by setting `init_weight=True` 
+and set biases to zero. In the case of Keras API this can be obtained by setting `init_weight=True` 
 in the `KerasReceptiveField(init_weight=True)` constructor.
 
 # Limitations
 
 * Numerical approach cannot be used when RF is larger that input image, however 
-one may try to increase the input image size, sice RF parameters depend on the architecture not 
-image.
+one may try to increase the input image size, since RF parameters depend on the architecture not 
+input image size.
 
 # Supported APIs
 
@@ -42,11 +52,14 @@ possible to extend **receptivefield** functionality by deriving
 abstract class **ReceptiveField** in base.py file. 
 
 * Keras with `KerasReceptiveField`, example usage in *notebooks/keras_api.ipynb*
-* Tensorflow with `TFReceptiveField` example usage in *notebooks/tensorflow_api.ipynb*
+* Tensorflow with `TFReceptiveField` or `TFFeatureMapsReceptiveField` example usage in *notebooks/tensorflow_api.ipynb*
 
 # How does it work?
 
-1. Define build_function which returns Keras model
+This is description of a general approach which is almost the same for other
+APIs.
+
+1. Define build_function which returns model (here Keras model)
 
     ```python
     def model_build_func(input_shape=[224, 224, 3]):
@@ -61,25 +74,35 @@ abstract class **ReceptiveField** in base.py file.
     rf_params = KerasReceptiveField(model_build_func).compute(
         input_shape=[224, 224, 3], # this will be passed to model_build_func
         input_layer='input_image', # must exist - usually input image layer
-        output_layer='feature_map' # for example last conv layer
+        output_layers=['feature_map'] # for example last conv layer
     )
     ```
     
-3. The `rf_params` is object of class `ReceptiveFieldDescription` e.g.
+3. The `rf_params` is a list of `FeatureMapDescription`. Here we selected 
+only single feature map `output_layers=['feature_map']` and the `rf_params` will 
+contain
   
     ```python
-    ReceptiveFieldDescription(
-            offset=(17.0, 17.0), 
-            stride=(4.0, 4.0), 
-            size=Size(w=34, h=34)
-    )
-    ```  
-    * `offset` - defines location of the first left-top anchor in the 
-    image coordinates (defined in pixels). 
-    * `stride` - defines how much RF of the network moves w.r.t unit displacement 
-    in the feature_map tensor. 
-    * `size` - defines the effective area in the input image which one point 
-    in the feature_map tensor is seeing.
+    rf_params = [
+       FeatureMapDescription(
+           size=Size(w=60, h=60), 
+           rf=ReceptiveFieldDescription(
+               offset=(2.5, 2.5), 
+               stride=(1.0, 1.0), 
+               size=Size(w=9, h=9))
+           )
+    ]
+    ```
+    Explanation of `FeatureMapDescription` fields:
+    * `size` - defined the spatial dimensions of the feature map i.e. the width 
+        and height of the feature map grid.
+    * rf is an instance of `ReceptiveFieldDescription`:
+        * `offset` - defines location of the first left-top anchor in the 
+        image coordinates (defined in pixels). 
+        * `stride` - defines how much RF of the network moves w.r.t unit displacement 
+        in the feature_map tensor. 
+        * `size` - defines the effective area in the input image which one point 
+        in the feature_map tensor is seeing.
 
 # Keras minimal - copy/paste example
 
@@ -106,23 +129,79 @@ abstract class **ReceptiveField** in base.py file.
     shape = [64, 64, 3]
     # compute receptive field
     rf = KerasReceptiveField(model_build_func, init_weights=True)
-    rf_params = rf.compute(shape, 'input_image', 'feature_grid')
+    rf_params = rf.compute(shape, 'input_image', ['feature_grid'])
     # debug receptive field
-    rf.plot_rf_grid(get_default_image(shape, name='doge'))
+    rf.plot_rf_grids(get_default_image(shape, name='doge'))
     ```
 * Logger output + example RF grid
     ```text
-    Using TensorFlow backend.
-    [2017-11-28 21:47:14,327][ INFO][keras.py]::Feature map shape: (None, 23, 23, 64)
-    [2017-11-28 21:47:14,328][ INFO][keras.py]::Input shape      : (None, 64, 64, 3)
-    [2017-11-28 21:47:14,471][DEBUG][base.py]::Computing RF at center (11, 11) with offset GridPoint(x=0, y=0)
-    [2017-11-28 21:47:14,676][DEBUG][base.py]::Computing RF at center (11, 11) with offset GridPoint(x=1, y=1)
-    [2017-11-28 21:47:14,779][DEBUG][base.py]::Estimated RF params: ReceptiveFieldDescription(offset=(10.0, 10.0), stride=(2.0, 2.0), size=Size(w=20, h=20))
+      [ INFO][keras.py]::Feature maps shape: [[None, 23, 23, 1]]
+      [ INFO][keras.py]::Input shape       : (None, 64, 64, 3)
+      [ INFO][base.py]::Estimated receptive field for feature map [0]: ReceptiveFieldDescription(offset=(10.0, 10.0), stride=(2.0, 2.0), size=Size(w=20, h=20))
     ```
     
     <img src="img/demo_minimal.jpg" width="400">
 
+# Tensorflow minimal - copy/paste example
 
+* Python code with multiple feature maps selected and using secondary API with
+`TFFeatureMapsReceptiveField`. Same results can be obtained using 
+`TFReceptiveField` (check notebooks for example usage). 
+
+    ```python
+    from typing import List
+    from tensorflow.contrib import slim
+    import tensorflow as tf
+    from receptivefield.image import get_default_image
+    from receptivefield.tensorflow import TFFeatureMapsReceptiveField
+    
+  
+    def vgg_feature_extractor(input_image: tf.Tensor) -> List[tf.Tensor]:
+        """
+        A function which accepts image tensor [1, width, height, num_channels] and 
+        returns a list of feature maps of shape [1, fm_width, fm_height, fm_channels]
+        """
+        
+        def linear(x):
+            return x
+        
+        with slim.arg_scope([slim.conv2d],
+                              activation_fn=linear,
+                              weights_initializer=tf.constant_initializer(0.001),
+                              biases_initializer=tf.constant_initializer(0.0)):
+            
+            net = slim.repeat(input_image, 2, slim.conv2d, 64, [3, 3], scope='conv1')
+            net = slim.avg_pool2d(net, [2, 2], scope='pool1')
+            net = slim.repeat(net, 2, slim.conv2d, 128, [3, 3], scope='conv2')
+            net = slim.avg_pool2d(net, [2, 2], scope='pool2')
+            net = slim.repeat(net, 3, slim.conv2d, 256, [3, 3], scope='conv3')
+            net = slim.avg_pool2d(net, [2, 2], scope='pool3')
+            net = slim.repeat(net, 3, slim.conv2d, 512, [3, 3], scope='conv4')
+            fm0 = net # first feature map
+            net = slim.avg_pool2d(net, [2, 2], scope='pool4')
+            net = slim.repeat(net, 3, slim.conv2d, 512, [3, 3], scope='conv5')
+            fm1 = net # second feature map
+        
+        return [fm0, fm1]
+      
+    
+    image = get_default_image(shape=(96, 96), tile_factor=1, name="cat")
+    rf = TFFeatureMapsReceptiveField(vgg_feature_extractor)
+    rf_params = rf.compute(input_shape=image.shape)
+    # debug receptive field
+    rf.plot_rf_grids(get_default_image(shape, name='doge'))
+    ```
+    
+* Logger output + example RF grid
+    ```text
+    [ INFO][tensorflow.py]::Feature maps shape: [(1, 36, 36, 1), (1, 18, 18, 1)]
+    [ INFO][tensorflow.py]::Input shape       : [1, 288, 288, 3]
+    [ INFO][base.py]::Estimated receptive field for feature map [0]: ReceptiveFieldDescription(offset=(4.0, 4.0), stride=(8.0, 8.0), size=Size(w=92, h=92))
+    [ INFO][base.py]::Estimated receptive field for feature map [1]: ReceptiveFieldDescription(offset=(8.0, 8.0), stride=(16.0, 16.0), size=Size(w=196, h=196))
+    ```
+    
+     <img src="img/demo_minimal_tf.jpg" width="700">
+    
 # Keras more detailed example
 
 Here we show, how to estimate effective receptive field of any Keras model.
@@ -187,7 +266,7 @@ should accept one parameter `input_shape`.
     ```
 
 * This step is not required but it is useful to plot results in the
-example image. For instance you would like to see what is the size
+example image. For instance, you would like to see what is the size
 of network receptive field in comparision to some objects you
 wish detect (or localize) by this network.
     
@@ -211,34 +290,32 @@ wish detect (or localize) by this network.
     rf_params = rf.compute(
         input_shape=image.shape, 
         input_layer='input_image', 
-        output_layer='feature_grid'
+        output_layers=['feature_grid']
     )
     print(rf_params)
-    
     ```
 
 * The resulting receptive field is:
 
     ```text
-    ReceptiveFieldDescription(
-            offset=(17.0, 17.0), 
-            stride=(4.0, 4.0), 
-            size=Size(w=34, h=34)
-    )
+    [FeatureMapDescription(
+       size=Size(w=16, h=16), 
+       rf=ReceptiveFieldDescription(
+           offset=(17, 17), 
+           stride=(4.0, 4.0), 
+           size=Size(w=34, h=34))
+    )]
     ```
 
-* Input shape: `rf.input_shape==GridShape(n=None, w=96, h=96, c=3)`
-* Output feature map shape: `rf.output_shape==GridShape(n=None, w=16, h=16, c=1)`.
- Note, that number of channels in the output feature map is set to 1 but this is
- used internally by `receptivefield`.
- 
+* Input shape: `rf.input_shape==ImageShape(w=96, h=96, c=3)`
+* Output feature map spatial dimensions: `rf.output_shapes==[Size(w=16, h=16)]`.
 * You may want to see how gradients backpropagate to the input image. Here
 `point=(8, 8)` refers to the (W, H) position of the source signal
-from the output grid.
+from the output grid. Here we select the first feature map with `fm_id=0`.
     
     ```python
     
-    rf.plot_gradient_at(point=(8, 8), image=None, figsize=(7, 7))
+    rf.plot_gradient_at(fm_id=0, point=(8, 8), image=None, figsize=(7, 7))
     ```
     
     <img src="img/demo_keras_response.jpg" width="512">
@@ -246,7 +323,7 @@ from the output grid.
 * Or even plot whole receptive field grid:
 
     ```python
-    rf.plot_rf_grid(custom_image=image, figsize=(6, 6))
+    rf.plot_rf_grids(custom_image=image, figsize=(6, 6))
     ```
     
     <img src="img/demo_keras_rf_debug.jpg" width="512">
@@ -256,3 +333,6 @@ grid point is seeing in the input image. Blue rectangle corresponds
 to the central grid point, green to the bottom-right point. Green dots
 show the position of the centers of the grid anchors in the source
 image. 
+
+* For more plotting functions check the implementation of the base class 
+`ReceptiveField` defined in `base.py` file.

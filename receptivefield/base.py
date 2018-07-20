@@ -1,59 +1,85 @@
 from abc import ABCMeta, abstractmethod
-from typing import Tuple, Callable, Any, Optional
-
+from typing import Tuple, Callable, Any, Optional, List
+import matplotlib.pyplot as plt
 import numpy as np
 
 from receptivefield.common import estimate_rf_from_gradients
 from receptivefield.logging import get_logger
 from receptivefield.plotting import plot_receptive_grid, plot_gradient_field
-from receptivefield.types import ImageShape, GridPoint, GridShape, \
-    ReceptiveFieldDescription, Size
+from receptivefield.types import (
+    ImageShape,
+    GridPoint,
+    GridShape,
+    ReceptiveFieldDescription,
+    Size,
+    FeatureMapDescription,
+)
 
 _logger = get_logger()
 
 
 class ReceptiveField(metaclass=ABCMeta):
-    def __init__(
-            self,
-            model_func: Callable[[ImageShape], Any]):
-        self.model_func: Callable[[ImageShape], Any] = model_func
-        self.gradient_function: Callable = None
-        self.input_shape: GridShape = None
-        self.output_shape: GridShape = None
-        self.rf_params: ReceptiveFieldDescription = None
-        self.built = False
+    def __init__(self, model_func: Callable[[Any], Any]) -> None:
 
-    def build_gradient_func(
-            self,
-            input_shape: ImageShape,
-            input_layer: str,
-            output_layer: str
+        self._model_func: Callable[[Any], Any] = model_func
+        self._gradient_function: Callable = None
+        self._input_shape: GridShape = None
+        self._output_shapes: List[GridShape] = None
+        self._rf_params: List[ReceptiveFieldDescription] = None
+        self._built: bool = False
+
+    @property
+    def feature_maps_desc(self) -> List[FeatureMapDescription]:
+        """Return description of all feature maps"""
+        return [
+            FeatureMapDescription(size=Size(size.w, size.h), rf=rf)
+            for size, rf in zip(self._output_shapes, self._rf_params)
+        ]
+
+    @property
+    def input_shape(self) -> ImageShape:
+        """Return input shape of the feature extractor"""
+        return ImageShape(
+            w=self._input_shape.w, h=self._input_shape.h, c=self._input_shape.c
+        )
+
+    @property
+    def output_shapes(self) -> List[Size]:
+        """Return a list of sizes of selected features maps"""
+        return [Size(w=size.w, h=size.h) for size in self._output_shapes]
+
+    @property
+    def num_feature_maps(self) -> int:
+        """Returns number of features maps"""
+        self._check()
+        return len(self._output_shapes)
+
+    def _build_gradient_func(
+        self, input_shape: ImageShape, input_layer: str, output_layers: List[str]
     ) -> None:
         """
-        Computes gradient function and additional parameters.
+        Creates gradient function and some additional parameters.
 
         :param input_shape: shape of the input image.
         :param input_layer: name of the input layer
-        :param output_layer: name of the target layer
+        :param output_layers: a list of names of the target feature map layers.
+
         """
-        gradient_function, input_shape, output_shape = \
-            self._prepare_gradient_func(
-                input_shape=input_shape,
-                input_layer=input_layer,
-                output_layer=output_layer
-            )
-        self.built = True
-        self.gradient_function = gradient_function
-        self.input_shape = input_shape
-        self.output_shape = output_shape
+        gradient_function, input_shape, output_shapes = self._prepare_gradient_func(
+            input_shape=input_shape,
+            input_layer=input_layer,
+            output_layers=output_layers,
+        )
+
+        self._built = True
+        self._gradient_function = gradient_function
+        self._input_shape = input_shape
+        self._output_shapes = output_shapes
 
     @abstractmethod
     def _prepare_gradient_func(
-            self,
-            input_shape: ImageShape,
-            input_layer: str,
-            output_layer: str
-    ) -> Tuple[Callable, GridShape, GridShape]:
+        self, input_shape: ImageShape, input_layer: str, output_layers: List[str]
+    ) -> Tuple[Callable, GridShape, List[GridShape]]:
         """
         Computes gradient function and additional parameters. Note
         that the receptive field parameters like stride or size, do not
@@ -62,65 +88,59 @@ class ReceptiveField(metaclass=ABCMeta):
         recommended to increase the input shape.
 
         :param input_shape: shape of the input image. Used in @model_func.
-        :param input_layer: name of the input layer
-        :param output_layer: name of the target layer
+        :param input_layer: name of the input layer.
+        :param output_layers: a list of names of the target feature map layers.
         """
         pass
 
     @abstractmethod
-    def _get_gradient_from_grid_point(
-            self,
-            point: GridPoint,
-            intensity: float = 1.0
-    ) -> np.ndarray:
+    def _get_gradient_from_grid_points(
+        self, points: List[GridPoint], intensity: float = 1.0
+    ) -> List[np.ndarray]:
         """
-        Computes gradient at  input_layer (image_layer) generated by
-        point-like perturbation at  output grid location given by
+        Computes gradient at input_layer (image_layer) generated by
+        point-like perturbation at output grid location given by
         @point coordinates.
 
-        :param point: source coordinate of the backpropagated gradient
+        :param points: source coordinate of the backpropagated gradient for each
+            feature map.
         :param intensity: scale of the gradient, default = 1
-        :return gradient map
+        :return gradient maps for each feature map
         """
         pass
 
     def _get_gradient_activation_at_map_center(
-            self,
-            center_offset: GridPoint,
-            intensity: float = 1
-    ):
-        _logger.debug(
-            f"Computing receptive field at center "
-            f"({self.output_shape.w//2}, {self.output_shape.h//2}) "
-            f"with offset {center_offset}")
+        self, center_offsets: List[GridPoint], intensity: float = 1
+    ) -> List[np.ndarray]:
+        points = []
+        for fm in range(self.num_feature_maps):
+            output_shape = self._output_shapes[fm]
+            center_offset = center_offsets[fm]
 
-        # compute grid center
-        w = self.output_shape.w
-        h = self.output_shape.h
-        cx = w // 2 - 1 \
-            if w % 2 == 0 else w // 2
-        cy = h // 2 - 1 \
-            if h % 2 == 0 else h // 2
+            _logger.debug(
+                f"Computing receptive field for feature map [{fm}] at center "
+                f"({output_shape.w//2}, {output_shape.h//2}) "
+                f"with offset {center_offset}"
+            )
 
-        cx += center_offset.x
-        cy += center_offset.y
+            # compute grid center
+            w = output_shape.w
+            h = output_shape.h
+            cx = w // 2 - 1 if w % 2 == 0 else w // 2
+            cy = h // 2 - 1 if h % 2 == 0 else h // 2
 
-        return self._get_gradient_from_grid_point(
-            point=GridPoint(x=cx, y=cy),
-            intensity=intensity
-        )
+            cx += center_offset.x
+            cy += center_offset.y
+            points.append(GridPoint(x=cx, y=cy))
+        return self._get_gradient_from_grid_points(points=points, intensity=intensity)
 
     def _check(self):
-        if not self.built:
-            raise Exception("Receptive field not computed. "
-                            "Run compute function.")
+        if not self._built:
+            raise Exception("Receptive field not computed. " "Run compute function.")
 
     def compute(
-            self,
-            input_shape: ImageShape,
-            input_layer: str,
-            output_layer: str
-    ) -> ReceptiveFieldDescription:
+        self, input_shape: ImageShape, input_layer: str, output_layers: List[str]
+    ) -> List[FeatureMapDescription]:
         """
         Compute ReceptiveFieldDescription of given model for image of
         shape input_shape [W, H, C]. If receptive field of the network
@@ -129,60 +149,110 @@ class ReceptiveField(metaclass=ABCMeta):
 
         :param input_shape: shape of the input image e.g. (224, 224, 3)
         :param input_layer: name of the input layer
-        :param output_layer: name of the target layer
+        :param output_layers: a list of names of the target feature map layers.
 
-        :return estimated ReceptiveFieldDescription
+        :return a list of estimated FeatureMapDescription for each feature
+            map.
         """
         # define gradient function
-        self.build_gradient_func(
+        self._build_gradient_func(
             input_shape=input_shape,
             input_layer=input_layer,
-            output_layer=output_layer
+            output_layers=output_layers,
         )
 
         # receptive field at map center
-        rf_grad00 = self._get_gradient_activation_at_map_center(center_offset=GridPoint(0, 0))
-        rf_at00 = estimate_rf_from_gradients(rf_grad00)
+        rf_grads00 = self._get_gradient_activation_at_map_center(
+            center_offsets=[GridPoint(0, 0)] * self.num_feature_maps
+        )
+        rfs_at00 = estimate_rf_from_gradients(rf_grads00)
 
         # receptive field at map center with offset (1, 1)
-        rf_grad11 = self._get_gradient_activation_at_map_center(center_offset=GridPoint(1, 1))
-        rf_at11 = estimate_rf_from_gradients(rf_grad11)
+        rf_grads11 = self._get_gradient_activation_at_map_center(
+            center_offsets=[GridPoint(1, 1)] * self.num_feature_maps
+        )
+        rfs_at11 = estimate_rf_from_gradients(rf_grads11)
 
         # receptive field at feature map grid start x=0, y=0
-        rf_grad_point00 = self._get_gradient_from_grid_point(point=GridPoint(0, 0))
-        rf_at_point00 = estimate_rf_from_gradients(rf_grad_point00)
-
-        # compute position of the first anchor, center point of rect
-        x0 = rf_at_point00.w - rf_at00.w / 2
-        y0 = rf_at_point00.h - rf_at00.h / 2
-
-        # compute feature map/input image offsets
-        dx = rf_at11.x - rf_at00.x
-        dy = rf_at11.y - rf_at00.y
-
-        # compute receptive field size
-        size = Size(rf_at00.w, rf_at00.h)
-
-        rf_params = ReceptiveFieldDescription(
-            offset=(x0, y0),
-            stride=(dx, dy),
-            size=size
+        rf_grads_point00 = self._get_gradient_from_grid_points(
+            points=[GridPoint(0, 0)] * self.num_feature_maps
         )
-        self.rf_params = rf_params
+        rfs_at_point00 = estimate_rf_from_gradients(rf_grads_point00)
 
-        _logger.debug(f"Estimated RF params: {rf_params}")
-        return rf_params
+        self._rf_params = []
 
-    def plot_gradient_at(
-            self,
-            point: GridPoint,
-            image: Optional[np.ndarray] = None,
-            **plot_params
-    ):
+        for fm, (rf_at_point00, rf_at00, rf_at11) in enumerate(
+            zip(rfs_at_point00, rfs_at00, rfs_at11)
+        ):
+            # compute position of the first anchor, center point of rect
+            x0 = rf_at_point00.w - rf_at00.w / 2
+            y0 = rf_at_point00.h - rf_at00.h / 2
+
+            # compute feature map/input image offsets
+            dx = rf_at11.x - rf_at00.x
+            dy = rf_at11.y - rf_at00.y
+
+            # compute receptive field size
+            size = Size(rf_at00.w, rf_at00.h)
+
+            rf_params = ReceptiveFieldDescription(
+                offset=(x0, y0), stride=(dx, dy), size=size
+            )
+
+            _logger.info(
+                f"Estimated receptive field for " f"feature map [{fm}]: {rf_params}"
+            )
+            self._rf_params.append(rf_params)
+
+        return self.feature_maps_desc
+
+    def plot_gradients_at(
+        self,
+        points: List[GridPoint],
+        image: Optional[np.ndarray] = None,
+        layout: Optional[Tuple[int, int]] = None,
+        figsize: Optional[Tuple[int, int]] = None,
+    ) -> None:
         """
         Plot gradient map generated by certain `point` at feature map.
 
-        :param point: a GridPoint on feature map.
+        :param points: a list of  GridPoint on feature maps.
+        :param image: (optional) image of shape [W, H, 3]
+        :param layout: (optional) a matplotlib subplot layout given by
+            tuple of form (num_rows, num_cols). If None the layout is set
+            to (num_feature_maps, 1).
+        :param figsize: (optional) a matplotlib figsize. If None the default
+            figure is used.
+        """
+
+        if layout is None:
+            layout = (self.num_feature_maps, 1)
+        if figsize is not None:
+            plt.figure(figsize=figsize)
+
+        receptive_field_grads = self._get_gradient_from_grid_points(
+            points=[GridPoint(*point) for point in points]
+        )
+
+        for fm in range(self.num_feature_maps):
+            axis = plt.subplot(layout[0], layout[1], fm + 1)
+            plot_gradient_field(
+                receptive_field_grad=receptive_field_grads[fm], image=image, axis=axis
+            )
+
+    def plot_gradient_at(
+        self,
+        fm_id: int,
+        point: GridPoint,
+        image: Optional[np.ndarray] = None,
+        **plot_params,
+    ) -> None:
+        """
+        Plot gradient map generated by certain `point` at selected feature map.
+
+        :param fm_id: an index of feature map for which gradient map
+            will be plotted.
+        :param point: a GridPoint on feature map selected by fm_id.
         :param image: (optional) image of shape [W, H, 3]
         :param plot_params: (optional) additional plot parameters:
             figsize: tuple of int (5, 5)
@@ -191,25 +261,29 @@ class ReceptiveField(metaclass=ABCMeta):
                 visualizations otherwise default figure is created, with
                 optional figsize.
         """
-
-        receptive_field_grad = self._get_gradient_from_grid_point(
-            point=GridPoint(*point))
+        points = [GridPoint(0, 0)] * self.num_feature_maps
+        points[fm_id] = GridPoint(*point)
+        receptive_field_grads = self._get_gradient_from_grid_points(points=points)
 
         plot_gradient_field(
-            receptive_field_grad=receptive_field_grad,
+            receptive_field_grad=receptive_field_grads[fm_id],
             image=image,
-            **plot_params
+            **plot_params,
         )
 
     def plot_rf_grid(
-            self,
-            custom_image: Optional[np.ndarray] = None,
-            plot_naive_rf: bool = False,
-            **plot_params
+        self,
+        fm_id: int,
+        custom_image: Optional[np.ndarray] = None,
+        plot_naive_rf: bool = False,
+        **plot_params,
     ) -> None:
         """
-        Visualize receptive field grid.
+        Visualize receptive field grid for selected feature map.
 
+
+        :param fm_id: an index of feature map for which gradient map
+            will be plotted.
         :param custom_image: (optional) image of shape [W, H, 3]
         :param plot_naive_rf: plot naive version of the receptive field. Naive
             version of RF does not take strides, and offsets into considerations,
@@ -223,10 +297,46 @@ class ReceptiveField(metaclass=ABCMeta):
                 optional figsize.
         """
         plot_receptive_grid(
-            input_shape=self.input_shape,
-            output_shape=self.output_shape,
-            rf_params=self.rf_params,
+            input_shape=self._input_shape,
+            output_shape=self._output_shapes[fm_id],
+            rf_params=self._rf_params[fm_id],
             custom_image=custom_image,
             plot_naive_rf=plot_naive_rf,
-            **plot_params
+            **plot_params,
         )
+
+    def plot_rf_grids(
+        self,
+        custom_image: Optional[np.ndarray] = None,
+        plot_naive_rf: bool = False,
+        layout: Optional[Tuple[int, int]] = None,
+        figsize: Optional[Tuple[int, int]] = None,
+    ) -> None:
+        """
+        Visualize receptive field grid for selected feature map.
+
+        :param custom_image: (optional) image of shape [W, H, 3]
+        :param plot_naive_rf: plot naive version of the receptive field. Naive
+            version of RF does not take strides, and offsets into considerations,
+            it is a simple linear mapping from N points in feature map to pixels
+            in the image.
+        :param layout: (optional) a matplotlib subplot layout given by
+            tuple of form (num_rows, num_cols). If None the layout is set
+            to (num_feature_maps, 1).
+        :param figsize: (optional) a matplotlib figsize. If None the default
+            figure is used.
+        """
+
+        if layout is None:
+            layout = (self.num_feature_maps, 1)
+        if figsize is not None:
+            plt.figure(figsize=figsize)
+
+        for fm in range(self.num_feature_maps):
+            axis = plt.subplot(layout[0], layout[1], fm + 1)
+            self.plot_rf_grid(
+                fm_id=fm,
+                custom_image=custom_image,
+                plot_naive_rf=plot_naive_rf,
+                axis=axis,
+            )
