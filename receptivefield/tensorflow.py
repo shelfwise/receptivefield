@@ -67,7 +67,7 @@ def _get_gradient_from_grid_points(
     for fm in range(rf_extractor.num_feature_maps):
         output_shape = rf_extractor._output_shapes[fm].replace(n=1)
         output_feature_map = np.zeros(shape=output_shape)
-        output_feature_map[:, points[fm].x, points[fm].y, 0] = intensity
+        output_feature_map[:, points[fm].y, points[fm].x, 0] = intensity
         output_feature_maps.append(output_feature_map)
 
     return rf_extractor._gradient_function(
@@ -101,9 +101,9 @@ class TFReceptiveField(ReceptiveField):
 
         :returns
             gradient_function: a function which returns gradient w.r.t. to
-                the input image
-            input_shape: a shape of the input image tensor
-            output_shape: a shapes of the output feature map tensors
+                the input image.
+            input_shape: a shape of the input image tensor.
+            output_shape: a list shapes of the output feature map tensors.
         """
 
         if self._session is not None:
@@ -238,7 +238,7 @@ class TFFeatureMapsReceptiveField(ReceptiveField):
             gradient_function: a function which returns gradient w.r.t. to
                 the input image
             input_shape: a shape of the input image tensor
-            output_shape: a shapes of the output feature map tensors
+            output_shapes: a list shapes of the output feature map tensors
         """
 
         if self._session is not None:

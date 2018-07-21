@@ -170,7 +170,7 @@ class KerasReceptiveField(ReceptiveField):
         for fm in range(self.num_feature_maps):
             output_shape = self._output_shapes[fm].replace(n=1)
             output_feature_map = np.zeros(shape=output_shape)
-            output_feature_map[:, points[fm].x, points[fm].y, 0] = intensity
+            output_feature_map[:, points[fm].y, points[fm].x, 0] = intensity
             output_feature_maps.append(output_feature_map)
 
         receptive_field_grads = self._gradient_function([
