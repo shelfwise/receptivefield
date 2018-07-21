@@ -42,6 +42,8 @@ install:
 
   # install TensorFlow (CPU version).
   - pip install tensorflow==1.8.0 keras==2.1.6
+  # install Pytorch
+  - conda install pytorch==0.4.0 torchvision cuda90 -c pytorch
 
 # command to run tests
 script:
