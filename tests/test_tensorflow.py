@@ -47,16 +47,16 @@ def test_tensorflow():
     rf = TFReceptiveField(model_build_func)
     rf_params0 = rf.compute(
         input_shape=ImageShape(*image.shape),
-        input_layer="input_image",
-        output_layers=["feature_map0"],
+        input_tensor="input_image",
+        output_tensors=["feature_map0"],
     )[0]
 
     image = get_test_image(tile_factor=1)
     rf = TFReceptiveField(model_build_func)
     rf_params1 = rf.compute(
         input_shape=ImageShape(*image.shape),
-        input_layer="input_image",
-        output_layers=["feature_map0"],
+        input_tensor="input_image",
+        output_tensors=["feature_map0"],
     )[0]
 
     assert_allclose(rf_params0.rf, rf_params1.rf)
@@ -68,8 +68,8 @@ def test_multiple_feature_maps():
 
     rf_params = rf.compute(
         input_shape=ImageShape(*image.shape),
-        input_layer="input_image",
-        output_layers=["feature_map0", "feature_map1"],
+        input_tensor="input_image",
+        output_tensors=["feature_map0", "feature_map1"],
     )
 
     rfs = 3 + 2 + 1 + 2 * 2 + 2 * 2
@@ -122,8 +122,8 @@ def test_compare_apis():
     rf_api1 = TFReceptiveField(model_build_func)
     rf_params_api1 = rf_api1.compute(
         input_shape=ImageShape(*image.shape),
-        input_layer="input_image",
-        output_layers=["feature_map0", "feature_map1"],
+        input_tensor="input_image",
+        output_tensors=["feature_map0", "feature_map1"],
     )
     for api0, api1 in zip(rf_params_api0, rf_params_api1):
         assert_allclose(api0.rf, api1.rf)
