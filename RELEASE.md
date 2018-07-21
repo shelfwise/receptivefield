@@ -1,3 +1,8 @@
+# Release 0.4.0
+
+## Major Features And Improvements
+* Added initial Pytorch API with `PytorchReceptiveField`.
+
 # Release 0.3.0
 
 ## Major Features And Improvements
