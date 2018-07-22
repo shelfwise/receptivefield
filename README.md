@@ -192,7 +192,7 @@ contain
     rf = TFFeatureMapsReceptiveField(vgg_feature_extractor)
     rf_params = rf.compute(input_shape=image.shape)
     # debug receptive field
-    rf.plot_rf_grids(get_default_image(shape, name='doge'))
+    rf.plot_rf_grids(image)
     ```
     
 * Logger output + example RF grid
