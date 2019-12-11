@@ -2,7 +2,6 @@
 
 # receptivefield
 
-
 Gradient based receptive field estimation for Convolutional 
 Neural Networks. **receptivefield** uses backpropagation of 
 the gradients from output of selected feature maps to the input image in order to
@@ -17,16 +16,15 @@ computing receptive fields cannot be used.
 # Installation & supported APIs
 
 * Requires: python (in version >= 3.6), numpy, matplotlib, pillow (check requirements.txt)
-* Depending on the selected API this library requires also:
-    * for Keras API: 
-        * keras>=2.1.6 
-        * tensorflow-gpu>=1.8.0
-    * for Tensorflow API:
-        * tensorflow-gpu>=1.8.0
-    * for Pytorch API:
-        * pytorch>=0.4.0
+* `pip install receptivefield>=0.5.0`
+    * tensorflow.keras>=2.0
+    * pytorch>=1.3.1
 
-* `pip install receptivefield`
+* `pip install receptivefield==0.4.0`
+    * keras==2.1.6 
+    * tensorflow==1.8.0
+    * pytorch>=0.4.0
+
 
 # Some remarks
 
@@ -145,66 +143,7 @@ contain
     
     <img src="img/demo_minimal.jpg" width="400">
 
-# Tensorflow minimal - copy/paste example
 
-* Python code with multiple feature maps selected and using secondary API with
-`TFFeatureMapsReceptiveField`. Same results can be obtained using 
-`TFReceptiveField` (check notebooks for example usage). 
-
-    ```python
-    from typing import List
-    from tensorflow.contrib import slim
-    import tensorflow as tf
-    from receptivefield.image import get_default_image
-    from receptivefield.tensorflow import TFFeatureMapsReceptiveField
-    
-  
-    def vgg_feature_extractor(input_image: tf.Tensor) -> List[tf.Tensor]:
-        """
-        A function which accepts image tensor [1, width, height, num_channels] and 
-        returns a list of feature maps of shape [1, fm_width, fm_height, fm_channels]
-        """
-        
-        def linear(x):
-            return x
-        
-        with slim.arg_scope([slim.conv2d],
-                              activation_fn=linear,
-                              weights_initializer=tf.constant_initializer(0.001),
-                              biases_initializer=tf.constant_initializer(0.0)):
-            
-            net = slim.repeat(input_image, 2, slim.conv2d, 64, [3, 3], scope='conv1')
-            net = slim.avg_pool2d(net, [2, 2], scope='pool1')
-            net = slim.repeat(net, 2, slim.conv2d, 128, [3, 3], scope='conv2')
-            net = slim.avg_pool2d(net, [2, 2], scope='pool2')
-            net = slim.repeat(net, 3, slim.conv2d, 256, [3, 3], scope='conv3')
-            net = slim.avg_pool2d(net, [2, 2], scope='pool3')
-            net = slim.repeat(net, 3, slim.conv2d, 512, [3, 3], scope='conv4')
-            fm0 = net # first feature map
-            net = slim.avg_pool2d(net, [2, 2], scope='pool4')
-            net = slim.repeat(net, 3, slim.conv2d, 512, [3, 3], scope='conv5')
-            fm1 = net # second feature map
-        
-        return [fm0, fm1]
-      
-    
-    image = get_default_image(shape=(96, 96), tile_factor=1, name="cat")
-    rf = TFFeatureMapsReceptiveField(vgg_feature_extractor)
-    rf_params = rf.compute(input_shape=image.shape)
-    # debug receptive field
-    rf.plot_rf_grids(image)
-    ```
-    
-* Logger output + example RF grid
-    ```text
-    [ INFO][tensorflow.py]::Feature maps shape: [(1, 36, 36, 1), (1, 18, 18, 1)]
-    [ INFO][tensorflow.py]::Input shape       : [1, 288, 288, 3]
-    [ INFO][base.py]::Estimated receptive field for feature map [0]: ReceptiveFieldDescription(offset=(4.0, 4.0), stride=(8.0, 8.0), size=Size(w=92, h=92))
-    [ INFO][base.py]::Estimated receptive field for feature map [1]: ReceptiveFieldDescription(offset=(8.0, 8.0), stride=(16.0, 16.0), size=Size(w=196, h=196))
-    ```
-    
-     <img src="img/demo_minimal_tf.jpg" width="700">
-    
 # Pytorch minimal - copy/paste example
 
 * Python code:

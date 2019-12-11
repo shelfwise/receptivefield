@@ -1,3 +1,9 @@
+# Release 0.5.0
+
+## Major Features And Improvements
+* Migration to Tensorflow (using Keras API) >2.0 and Pytorch >1.3
+* Old API still can be accessed by using older version of the library (0.4.0)
+
 # Release 0.4.0
 
 ## Major Features And Improvements

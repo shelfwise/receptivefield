@@ -1,22 +1,28 @@
 import pytest
 from numpy.testing import assert_allclose
-from keras.layers import Conv2D, Input, AvgPool2D
-from keras.models import Model
+import tensorflow as tf
+# from keras.layers import Conv2D, Input, AvgPool2D
+# from keras.models import Model
+# import keras
 
 from receptivefield.image import get_default_image
 from receptivefield.keras import KerasReceptiveField
 from receptivefield.types import ImageShape
 
 
+layers = tf.keras.layers
+models = tf.keras.models
+
+
 def get_build_func(padding="same", activation="linear"):
     def model_build_func(input_shape):
-        inp = Input(shape=input_shape, name="input_image")
-        x = Conv2D(32, (5, 5), padding=padding, activation=activation)(inp)
-        x = Conv2D(32, (3, 3), padding=padding, activation=activation, name="conv0")(x)
-        x = AvgPool2D()(x)
-        x = Conv2D(64, (3, 3), activation=activation, padding=padding)(x)
-        x = Conv2D(64, (3, 3), activation=activation, padding=padding, name="conv1")(x)
-        model = Model(inp, x)
+        inp = layers.Input(shape=input_shape, name="input_image")
+        x = layers.Conv2D(32, (5, 5), padding=padding, activation=activation)(inp)
+        x = layers.Conv2D(32, (3, 3), padding=padding, activation=activation, name="conv0")(x)
+        x = layers.AvgPool2D()(x)
+        x = layers.Conv2D(64, (3, 3), activation=activation, padding=padding)(x)
+        x = layers.Conv2D(64, (3, 3), activation=activation, padding=padding, name="conv1")(x)
+        model = models.Model(inp, x)
         return model
 
     return model_build_func

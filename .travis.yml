@@ -4,9 +4,6 @@ language: python
 python:
   - "3.6"
 
-env:
- - KERAS_BACKEND=tensorflow
-
 install:
   # code below is taken from http://conda.pydata.org/docs/travis.html
   # We do this conditionally because it saves us some downloading if the
@@ -41,19 +38,12 @@ install:
   - pip install -e .[tests]
 
   # install TensorFlow (CPU version).
-  - pip install tensorflow==1.8.0 keras==2.1.6
+  - pip install tensorflow==2.0
   # install Pytorch
-  - conda install pytorch==0.4.0 torchvision cuda90 -c pytorch
+  - conda install pytorch==1.3.1 torchvision==0.4.2
 
 # command to run tests
 script:
   - export MKL_THREADING_LAYER="GNU"
-  # run keras backend init to initialize backend config
-  - python -c "import keras.backend"
-  # create dataset directory to avoid concurrent directory creation at runtime
-  - mkdir ~/.keras/datasets
-  # set up keras backend
-  - sed -i -e 's/"backend":[[:space:]]*"[^"]*/"backend":\ "'$KERAS_BACKEND'/g' ~/.keras/keras.json;  
-  - echo -e "Running tests with the following config:\n$(cat ~/.keras/keras.json)"  
   - PYTHONPATH=$PWD:$PYTHONPATH py.test tests
 

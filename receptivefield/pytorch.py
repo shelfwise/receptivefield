@@ -24,24 +24,25 @@ def _define_receptive_field_func(
     model = model_fn()
     _ = model(input_image)
 
-    feature_maps = model.__dict__.get('feature_maps', None)
+    feature_maps = model.__dict__.get("feature_maps", None)
     if feature_maps is None:
-        raise ValueError('Field module.feature_maps is not defined. '
-                         'Cannot compute receptive fields.')
+        raise ValueError(
+            "Field module.feature_maps is not defined. "
+            "Cannot compute receptive fields."
+        )
 
     if type(feature_maps) != list:
-        raise ValueError('Field module.feature_maps must be a list. '
-                         'Cannot compute receptive fields.')
+        raise ValueError(
+            "Field module.feature_maps must be a list. "
+            "Cannot compute receptive fields."
+        )
 
     # compute feature maps output shapes
     output_shapes = []
     for feature_map in feature_maps:
         output_shape = feature_map.size()
         output_shape = GridShape(
-            n=output_shape[0],
-            c=output_shape[1],
-            h=output_shape[2],
-            w=output_shape[3]
+            n=output_shape[0], c=output_shape[1], h=output_shape[2], w=output_shape[3]
         )
         output_shapes.append(output_shape)
 
@@ -49,15 +50,16 @@ def _define_receptive_field_func(
     _logger.info(f"Input shape       : {input_shape}")
 
     def gradient_function(
-            receptive_field_masks: List[torch.Tensor]
+        receptive_field_masks: List[torch.Tensor],
     ) -> List[np.ndarray]:
 
         grads = []
         for fm, rf_mask in enumerate(receptive_field_masks):
             input_tensor = torch.zeros(*shape)
-            input_tensor = torch.autograd.Variable(
-                input_tensor, requires_grad=True
-            )
+            # input_tensor = torch.autograd.Variable(
+            #     input_tensor, requires_grad=True
+            # )
+            input_tensor.requires_grad_(True)
             model.zero_grad()
             _ = model(input_tensor)
 
@@ -100,15 +102,11 @@ class PytorchReceptiveField(ReceptiveField):
             output_shapes: a list shapes of the output feature map tensors.
         """
         input_shape = ImageShape(*input_shape)
-        input_shape = GridShape(
-            n=1,
-            c=input_shape.c,
-            h=input_shape.h,
-            w=input_shape.w,
-        )
+        input_shape = GridShape(n=1, c=input_shape.c, h=input_shape.h, w=input_shape.w,)
 
-        gradient_function, input_shape, output_shapes = \
-            _define_receptive_field_func(self._model_func, input_shape)
+        gradient_function, input_shape, output_shapes = _define_receptive_field_func(
+            self._model_func, input_shape
+        )
 
         return gradient_function, input_shape, output_shapes
 
