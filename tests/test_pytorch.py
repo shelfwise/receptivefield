@@ -8,6 +8,7 @@ from receptivefield.types import ImageShape
 
 class Linear(nn.Module):
     """An identity activation function"""
+
     def forward(self, x):
         return x
 
@@ -50,11 +51,7 @@ class SimpleVGG(nn.Module):
             activation(),
             nn.AvgPool2d(kernel_size=2, stride=2),
         ]
-        return [
-            nn.Sequential(*block1),
-            nn.Sequential(*block2),
-            nn.Sequential(*block3)
-        ]
+        return [nn.Sequential(*block1), nn.Sequential(*block2), nn.Sequential(*block3)]
 
 
 def model_fn() -> nn.Module:

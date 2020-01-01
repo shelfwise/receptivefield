@@ -1,6 +1,7 @@
 import pytest
 from numpy.testing import assert_allclose
 import tensorflow as tf
+
 # from keras.layers import Conv2D, Input, AvgPool2D
 # from keras.models import Model
 # import keras
@@ -18,10 +19,14 @@ def get_build_func(padding="same", activation="linear"):
     def model_build_func(input_shape):
         inp = layers.Input(shape=input_shape, name="input_image")
         x = layers.Conv2D(32, (5, 5), padding=padding, activation=activation)(inp)
-        x = layers.Conv2D(32, (3, 3), padding=padding, activation=activation, name="conv0")(x)
+        x = layers.Conv2D(
+            32, (3, 3), padding=padding, activation=activation, name="conv0"
+        )(x)
         x = layers.AvgPool2D()(x)
         x = layers.Conv2D(64, (3, 3), activation=activation, padding=padding)(x)
-        x = layers.Conv2D(64, (3, 3), activation=activation, padding=padding, name="conv1")(x)
+        x = layers.Conv2D(
+            64, (3, 3), activation=activation, padding=padding, name="conv1"
+        )(x)
         model = models.Model(inp, x)
         return model
 
@@ -89,9 +94,7 @@ def test_expected_values():
     )[0]
 
     assert_allclose(rf_params0.rf.stride, (2, 2))
-    assert_allclose(
-        rf_params0.rf.size, (((2 + 1) * 2 + 2) * 2, ((2 + 1) * 2 + 2) * 2)
-    )
+    assert_allclose(rf_params0.rf.size, (((2 + 1) * 2 + 2) * 2, ((2 + 1) * 2 + 2) * 2))
 
 
 def test_expected_values_two_fm():

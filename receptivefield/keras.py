@@ -31,6 +31,24 @@ def _check_activation(layer: Layer):
         )
 
 
+def safe_init_conv2d(layer: layers.Conv2D):
+
+    weights = layer.get_weights()
+    w_kernel = scaled_constant(1, weights[0].shape)
+
+    _logger.info(
+        f"Setting weights for layer `{layer.name}` :: "
+        f"{layer.__class__.__name__}{w_kernel.shape}"
+    )
+
+    w = [w_kernel]
+    if len(weights) > 1:
+        w_bias = np.zeros_like(weights[1])
+        w.append(w_bias)
+    layer.set_weights(w)
+    _check_activation(layer)
+
+
 def setup_model_weights(model: Model) -> None:
     """
     Set all weights to be a constant values. Biases are set to zero.
@@ -38,8 +56,15 @@ def setup_model_weights(model: Model) -> None:
 
     :param model: a Keras model
     """
-    _logger.info(f"Running `setup_model_weights` on model: {model}")
-    for layer in model.layers:
+
+    if isinstance(model, Model):
+        _logger.info(f"Running `setup_model_weights` on Model: {type(model)}")
+        _layers = model.layers
+    elif isinstance(model, layers.Layer):
+        _logger.info(f"Running `setup_model_weights` on Layer: {type(model)}")
+        _layers = model._layers
+
+    for layer in _layers:
         # check layer type
         if type(layer) == MaxPool2D:
             _logger.warning(
@@ -53,20 +78,14 @@ def setup_model_weights(model: Model) -> None:
 
         # set weights
         if type(layer) == Conv2D:
-            _logger.debug(f"Setting weights for layer {layer.name}")
-            weights = layer.get_weights()
-            w_kernel = scaled_constant(1, weights[0].shape)
-            w = [w_kernel]
-            if len(weights) > 1:
-                w_bias = np.zeros_like(weights[1])
-                w.append(w_bias)
-            layer.set_weights(w)
-            _check_activation(layer)
+            safe_init_conv2d(layer)
         elif type(layer) == Activation:
             _check_activation(layer)
+        elif isinstance(layer, layers.Layer):
+            setup_model_weights(layer)
         else:
             _logger.warning(
-                f"Setting weights for layer {type(layer)} " f"is not supported."
+                f"Setting weights for layer {type(layer)} is not supported."
             )
 
 
