@@ -65,8 +65,9 @@ class ReceptiveField(metaclass=ABCMeta):
         :param args: a list of arguments which depend on the API
         :param kwargs: keywords which depend on the API
         """
-        gradient_function, input_shape, output_shapes = \
-            self._prepare_gradient_func(*args, **kwargs)
+        gradient_function, input_shape, output_shapes = self._prepare_gradient_func(
+            *args, **kwargs
+        )
 
         self._built = True
         self._gradient_function = gradient_function
@@ -142,8 +143,7 @@ class ReceptiveField(metaclass=ABCMeta):
 
     def _check(self):
         if not self._built:
-            raise Exception(
-                "Receptive field not computed. Run compute function.")
+            raise Exception("Receptive field not computed. Run compute function.")
 
     def compute(self, *args, **kwargs) -> List[FeatureMapDescription]:
         """

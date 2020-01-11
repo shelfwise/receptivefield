@@ -48,9 +48,7 @@ def tile_numpy_image(
     :return: numpy array image of shape [W*n, H*n, C],
         where n=2 * tile_factor + 1
     """
-    timage = tile_pil_image(
-        Image.fromarray(numpy.uint8(image)), tile_factor, shade
-    )
+    timage = tile_pil_image(Image.fromarray(numpy.uint8(image)), tile_factor, shade)
     return numpy.array(timage)
 
 

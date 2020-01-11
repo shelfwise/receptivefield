@@ -1,21 +1,21 @@
 from setuptools import setup
 
-VERSION = '0.4.0'
+VERSION = '0.5.0'
 
 setup(
     name='receptivefield',
     packages=['receptivefield'],
     version=VERSION,
-    description='Gradient based Receptive field estimation library',
-    author='fornax.ai',
-    author_email='krzysztof.kolasinski@fornax.ai',
+    description='Gradient based Receptive field estimation library for Tensorflow and Pytorch',
+    author='ShelfWise.ai',
+    author_email='krzysztof.kolasinski@shelfwise.ai',
     url='https://github.com/fornaxai/receptivefield',
     download_url=f'https://github.com/fornaxai/receptivefield/archive/{VERSION}.tar.gz',
-    keywords=['tensorflow', 'keras'],
+    keywords=['tensorflow', 'pytorch'],
     install_requires=[
-        'pillow>=4.1.1',
-        'matplotlib>=2.0.2',
-        'numpy>=1.14.3',
+        'pillow>=6.2.*',
+        'matplotlib>=3.1.*',
+        'numpy>=1.17.*',
     ],
     classifiers=[],
     include_package_data=True

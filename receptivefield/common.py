@@ -44,11 +44,11 @@ def scaled_constant(
     """
     fan_in, fan_out = _compute_fans(shape)
     if mode == "fan_in":
-        scale /= max(1., fan_in)
+        scale /= max(1.0, fan_in)
     elif mode == "fan_out":
-        scale /= max(1., fan_out)
+        scale /= max(1.0, fan_out)
     elif mode == "fan_avg":
-        scale /= max(1., float(fan_in + fan_out) / 2)
+        scale /= max(1.0, float(fan_in + fan_out) / 2)
 
     limit = scale
     return limit * np.ones(shape, dtype=dtype)
@@ -84,7 +84,7 @@ def estimate_rf_from_gradient(receptive_field_grad: np.ndarray) -> ReceptiveFiel
 
 
 def estimate_rf_from_gradients(
-    receptive_field_grads: List[np.ndarray]
+    receptive_field_grads: List[np.ndarray],
 ) -> List[ReceptiveFieldRect]:
     """
     Given input gradient tensors of shape [N, W, H, C] it returns the
